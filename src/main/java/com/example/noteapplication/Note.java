@@ -2,6 +2,8 @@ package com.example.noteapplication;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 public class Note {
 
@@ -10,6 +12,7 @@ public class Note {
     private LocalDateTime currentTime ;
     private String status ;
     private  String category;
+
 
     public Note(String title, String description, String status, String category){
         this.title = title;
@@ -38,6 +41,15 @@ public class Note {
     }
     public String getCategory(){
         return category;
+    }
+    public String getFormattedTime() {
+
+        return currentTime.format(DateTimeFormatter.ofPattern("hh:mma"));
+    }
+
+    public String getFormattedDate() {
+
+        return currentTime.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
     }
 
 
