@@ -1,0 +1,85 @@
+/* Style for the VBox sidebar */
+.sidebar {
+    -fx-background-color: white;
+    -fx-padding: 20;
+    -fx-spacing: 10;
+}
+
+/* Style for the category label */
+.sidebar-label {
+    -fx-font-family: "System";
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+}
+
+/* Style for the ListView of categories */
+.sidebar-listview {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-control-inner-background: white;
+}
+
+/* Style for the "Add New Category" button */
+.sidebar-button {
+    -fx-background-color: #36d921;
+    -fx-text-fill: white;
+    -fx-border-color: transparent; /* no border */
+    -fx-font-family: "System";
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-pref-width: 200px;
+    -fx-border-radius: 50px;
+}
+.sidebar-button:hover{
+-fx-background-color: green;
+}
+
+.sidebar-listview  .list-cell{
+-fx-text-fill: black;
+-fx-background-color: white;
+}
+.sidebar-listview .list-cell:hover{
+-fx-background-color: green ;
+-fx-text-fill: white;
+}
+/*dialog box for add notes */
+.dialog-box {
+-fx-background-color : white;
+
+}
+/* category box of add note */
+.category-box {
+-fx-background-color : white;
+
+}
+/* for the note card */
+.note-card{
+-fx-background-color: #d679ed;
+-fx-text-fill: white ;
+-fx-background-radius: 20;
+
+}
+.note-card:hover {
+   -fx-effect: dropshadow(gaussian, #cb45ed, 20, 0.5, 0, 7);
+ }
+
+
+/* in note card category label */
+.categoryLabel-card{
+-fx-background-color : #d679ed;
+-fx-text-fill: white;
+
+}
+
+/* note delete button */
+.note-deleteBtn {
+-fx-background-color: red;
+-fx-text-fill: white;
+-fx-background-radius : 5 ;
+
+
+}
+.status-button {
+-fx-background-color: white;
+-fx-text-fill: black;
+}
