@@ -27,7 +27,7 @@ public class NoteApp  extends Application {
     private VBox sideBar ;
     private HBox headBar;
     private BorderPane root ;
-    private MenuBar status ;
+    private ComboBox status ;
 
 
 
@@ -83,13 +83,13 @@ public class NoteApp  extends Application {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        status = new MenuBar();
-        Menu statusMenu = new Menu("Status  ");
-        MenuItem incomplete = new MenuItem("Incomplete");
-        MenuItem complete = new MenuItem("Completed");
-        statusMenu.getItems().addAll(incomplete, complete);
-        status.getMenus().add(statusMenu);
+
+        status = new ComboBox();
+        status.getItems().addAll("Incomplete", "Complete");
         status.getStyleClass().add("sidebar-button");
+        status.getSelectionModel().select("status");
+
+
         Button addButton = new Button("Add new Note ");
 //        addButton action
         addButton.setOnAction(e-> showAddDialog());
@@ -162,13 +162,14 @@ public class NoteApp  extends Application {
 
 //        category
         ComboBox< String > cateoryBox = new ComboBox<>();
+
         cateoryBox.getItems().addAll("WishList", "Assignment", "Projects", "Study", "Work");
         cateoryBox.getStyleClass().add("category-box");
         cateoryBox.setStyle("-fx-background-color: white; ");
         cateoryBox.getSelectionModel().selectFirst();
         AtomicReference<String> selectedCategory = new AtomicReference<>();
+        selectedCategory.set(cateoryBox.getSelectionModel().getSelectedItem());
         cateoryBox.getSelectionModel().selectedItemProperty().addListener((observableValue, oldval, newVal) -> {
-            System.out.println("userSelected"+newVal);
             selectedCategory.set(newVal);
         });
 
@@ -182,18 +183,19 @@ public class NoteApp  extends Application {
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
 
         Button saveBtn = new Button("Save");
-        saveBtn.setOnAction(e-> {
-                    Note newNote=   new Note(titleField.getText(),
-                            contentArea.getText(),
-                            "Incomplete",
-                            selectedCategory.get()
-                    );
-                    notesContainer.getChildren().add(createNoteCard(newNote));
-                    dialog.close();
-        }
+        saveBtn.setOnAction(e -> {
+            String title = titleField.getText();
+            String description = contentArea.getText();
+            String category = selectedCategory.get();
+            if (title == null || title.trim().isEmpty() || category == null) {
+                showAlert("Input Error", "Please enter a title and select a category.");
+                return;
+            }
+            Note newNote = new Note(title, description, "Incomplete", category);
+            notesContainer.getChildren().add(createNoteCard(newNote));
+            dialog.close();
+        });
 
-        );
-        dialog.close();
         saveBtn.setPrefWidth(100);
         saveBtn.setStyle("-fx-background-color: green; -fx-text-fill: white; ");
 
@@ -241,25 +243,45 @@ public class NoteApp  extends Application {
 
         categoryLabel.getStyleClass().add("categoryLabel-card");
 
-       MenuButton statusButton = new MenuButton("Status");
-       statusButton.getItems().addAll(
-               new MenuItem("Completed"),
-               new MenuItem("Incomplete")
-       );
-       statusButton.getStyleClass().add("status-button");
+        ComboBox<String> statusBox = new ComboBox<>();
+        statusBox.getItems().addAll( "Incomplete","Complete");
+        statusBox.getStyleClass().add("status-button");
+        statusBox.getSelectionModel().selectFirst();
 
        Button deleteBtn = new Button(" x ");
        deleteBtn.setPrefWidth(50);
        deleteBtn.getStyleClass().add("note-deleteBtn");
        deleteBtn.setOnAction(e-> deleteNote(note));
 
-       header.getChildren().addAll(titleLabel, spacer, categoryLabel, statusButton,deleteBtn);
+       header.getChildren().addAll(titleLabel, spacer, categoryLabel, statusBox,deleteBtn);
 
+       // content text
+        Label contentLabel = new Label(note.getDescription());
+        contentLabel.setWrapText(true);
+        contentLabel.setFont(Font.font("System", FontWeight.NORMAL, 12));
+        contentLabel.setStyle("-fx-text-fill: #555; ");
 
+        Region contentSpacer = new Region();
+        VBox.setVgrow(contentSpacer, Priority.ALWAYS);
 
+        // footer for time and date
+        HBox footer = new HBox();
+        footer.setAlignment(Pos.CENTER_LEFT);
 
+        Label timeLabel = new Label(note.getFormattedTime());
+        timeLabel.setFont(Font.font("System", FontWeight.BOLD, 12));
+        timeLabel.setStyle("-fx-text-fill: #333;");
 
-        card.getChildren().addAll(header);
+        Region footerSpacer = new Region();
+        HBox.setHgrow(footerSpacer, Priority.ALWAYS);
+
+        Label dateLabel = new Label(note.getFormattedDate());
+        dateLabel.setFont(Font.font("System", FontWeight.NORMAL, 12));
+        dateLabel.setStyle("-fx-text-fill: #666");
+
+        footer.getChildren().addAll(timeLabel, footerSpacer, dateLabel);
+
+        card.getChildren().addAll(header, contentLabel, contentSpacer,footer);
         return card;
 
     }
