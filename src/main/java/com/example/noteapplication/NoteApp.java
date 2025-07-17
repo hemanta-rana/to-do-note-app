@@ -17,17 +17,19 @@ import javafx.stage.Stage;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 
 public class NoteApp  extends Application {
+    private DatabaseManager dbManager = new DatabaseManager();
 
     private ObservableList<Note> notes = FXCollections.observableArrayList();
     private FlowPane notesContainer;
     private VBox sideBar ;
     private HBox headBar;
     private BorderPane root ;
-    private ComboBox status ;
+
 
 
 
@@ -49,7 +51,8 @@ public class NoteApp  extends Application {
 
         ScrollPane mainContent = createMainContent();
         root.setCenter(mainContent);
-
+        // load notes from database
+        loadFromDatabase();
 
         Scene scene = new Scene(root, 1400, 700);
         scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
@@ -84,11 +87,14 @@ public class NoteApp  extends Application {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
 
-        status = new ComboBox();
+       ComboBox status = new ComboBox();
         status.getItems().addAll("Incomplete", "Complete");
         status.getStyleClass().add("sidebar-button");
         status.getSelectionModel().select("status");
-
+        status.setOnAction(e -> {
+            String selectedStatus = (String) status.getSelectionModel().getSelectedItem();
+            filterNotesByStatus(selectedStatus);
+        });
 
         Button addButton = new Button("Add new Note ");
 //        addButton action
@@ -115,11 +121,27 @@ public class NoteApp  extends Application {
 
         Label categoryLabel = new Label("Categories");
         categoryLabel.getStyleClass().add("sidebar-label");
-
-        ListView<String> categories = new ListView<>();
+        ObservableList<String> categoriesItems = FXCollections.observableArrayList("All notes", "wishList", "Assignment", "Projects", "Work", "study");
+        ListView<String> categories = new ListView<>(categoriesItems);
         categories.getStyleClass().add("sidebar-listview");
-        categories.getItems().addAll("All notes", "WishList", "Assignment", "Projects", "Work", "Study");
+//        categories.getItems().addAll("All notes", "WishList", "Assignment", "Projects", "Work", "Study");
 
+        categories.getSelectionModel().selectedItemProperty().addListener(
+                (observable , oldValue, newValue)->{
+                    if (newValue != null){
+                        notesContainer.getChildren().clear();
+                        for (Note note: dbManager.getNotesByCategory(newValue)){
+                            notesContainer.getChildren().addAll(createNoteCard(note));
+                        }
+                    }
+                    if (newValue.equals("All notes")){
+                        notesContainer.getChildren().clear();
+                        for (Note note: dbManager.getAllNotes()){
+                            notesContainer.getChildren().addAll(createNoteCard(note));
+                        };
+                    }
+                }
+        );
         Button addCategory = new Button("Add New Category ");
         addCategory.getStyleClass().add("sidebar-button");
 
@@ -139,7 +161,7 @@ public class NoteApp  extends Application {
         notesContainer.setHgap(20);
         notesContainer.setVgap(20);
         notesContainer.setPadding(new Insets(30));
-        notesContainer.setStyle("_fx-background-color: #f5f5f5; ");
+        notesContainer.setStyle("-fx-background-color: #f5f5f5; ");
 
         scrollPane.setContent(notesContainer);
         return scrollPane;
@@ -192,6 +214,9 @@ public class NoteApp  extends Application {
                 return;
             }
             Note newNote = new Note(title, description, "Incomplete", category);
+
+            dbManager.addNote(newNote);
+            notes.add(newNote);
             notesContainer.getChildren().add(createNoteCard(newNote));
             dialog.close();
         });
@@ -285,9 +310,118 @@ public class NoteApp  extends Application {
         return card;
 
     }
-    public void showEditNoteDialog(Note note){}
-    public void deleteNote(Note note){}
+    public void showEditNoteDialog(Note note) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setTitle("Edit Note");
 
+        VBox dialogBox = new VBox(15);
+        dialogBox.setPadding(new Insets(20));
+        dialogBox.getStyleClass().add("dialog-box");
+
+        TextField titleField = new TextField(note.getTitle());
+        titleField.setPromptText("Note title...");
+
+        ComboBox<String> categoryBox = new ComboBox<>();
+        categoryBox.getItems().addAll("WishList", "Assignment", "Projects", "Study", "Work");
+        categoryBox.getStyleClass().add("category-box");
+        categoryBox.setStyle("-fx-background-color: white;");
+        categoryBox.getSelectionModel().select(note.getCategory());
+
+        TextArea contentArea = new TextArea(note.getDescription());
+        contentArea.setPromptText("Write note description");
+
+        ComboBox<String> statusBox = new ComboBox<>();
+        statusBox.getItems().addAll("Incomplete", "Complete");
+        statusBox.getSelectionModel().select(note.getStatus());
+        statusBox.setOnAction(e-> {
+            String newStatus = statusBox.getSelectionModel().getSelectedItem();
+            note.setStatus(newStatus);
+            dbManager.updateNote(note);
+        });
+
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+
+        Button saveBtn = new Button("Save");
+        saveBtn.setOnAction(e -> {
+            String title = titleField.getText();
+            String description = contentArea.getText();
+            String category = categoryBox.getSelectionModel().getSelectedItem();
+            String status = statusBox.getSelectionModel().getSelectedItem();
+
+            if (title == null || title.trim().isEmpty() || category == null) {
+                showAlert("Input Error", "Please enter a title and select a category.");
+                return;
+            }
+
+            // Update the note object
+            note.setTitle(title);
+            note.setDescription(description);
+            note.setCategory(category);
+            note.setStatus(status);
+
+            // Update in database (you'll need to add this method to DatabaseManager)
+            // dbManager.updateNote(note);
+
+            // Refresh UI
+            refreshNotes();
+
+            dialog.close();
+        });
+
+        saveBtn.setPrefWidth(100);
+        saveBtn.setStyle("-fx-background-color: green; -fx-text-fill: white;");
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.setPrefWidth(100);
+        cancelBtn.setStyle("-fx-background-color: white;");
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        buttonBox.getChildren().addAll(cancelBtn, saveBtn);
+
+        dialogBox.getChildren().addAll(
+                new Label("Title"), titleField,
+                new Label("Category:"), categoryBox,
+                new Label("Status:"), statusBox,
+                new Label("Note Description"), contentArea,
+                buttonBox
+        );
+
+        Scene dialogScene = new Scene(dialogBox, 500, 500);
+        dialog.setScene(dialogScene);
+        dialog.show();
+    }
+    public void deleteNote(Note note){
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Note");
+        alert.setHeaderText("Are you sure you want to delete this noted ? ");
+        alert.setContentText("This action cannot be undone");
+
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK){
+                dbManager.deleteNote(note);
+                notes.remove(note);
+                refreshNotes();
+
+            }
+        });
+    }
+
+    private void refreshNotes(){
+        notesContainer.getChildren().clear();
+        for (Note note: notes){
+            notesContainer.getChildren().add(createNoteCard(note));
+        }
+
+
+    }
+    private void loadFromDatabase(){
+        List<Note> dbNotes = dbManager.getAllNotes();
+        notes.clear();
+        notes.addAll(dbNotes);
+        refreshNotes();
+    }
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -295,6 +429,26 @@ public class NoteApp  extends Application {
         alert.setContentText(message);
         alert.showAndWait();
     }
+    private void filterNotesByStatus(String status){
+        if (status == null || status.equals("All")){
+            refreshNotes();
+            return;
+        }
+
+            notesContainer.getChildren().clear();
+           for (Note note: dbManager.getNotesByStatus(status)){
+
+                   notesContainer.getChildren().add(createNoteCard(note));
+
+           }
+
+
+//        notesContainer.getChildren().clear();
+//        for (Note note: notes){
+//            notesContainer.getChildren().add(createNoteCard(note));
+//        }
+    }
+
 
 
     public static void main(String[] args){

@@ -107,3 +107,23 @@
     -fx-background-color: white;
     -fx-text-fill: black;
 }
+
+.sidebar-button,
+.note-deleteBtn,
+.note-card,
+.sidebar-listview .list-cell {
+    -fx-transition: all 0.3s ease-in-out;
+}
+
+.text-field, .text-area {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px;
+}
+
+.sidebar-listview .list-cell:selected {
+    -fx-background-color: #81c784; /* soft green */
+    -fx-text-fill: black;
+}

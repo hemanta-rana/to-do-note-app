@@ -22,6 +22,14 @@ public class Note {
         this.category = category;
     }
 
+    public Note(String title, String description, String status, String category, LocalDateTime currentTime) {
+        this.title = title;
+        this.description = description;
+        this.status = status;
+        this.currentTime = currentTime;
+        this.category = category;
+    }
+
     public String getTitle(){
         return title;
     }
@@ -31,9 +39,15 @@ public class Note {
     public String getDescription(){
      return description;
     }
+    public void setDescription(String description){
+        this.description = description;
+    }
 
     public String getStatus (){
         return status;
+    }
+    public void setStatus (String status){
+        this.status = status;
     }
 
     public LocalDateTime getCurrentTime(){
@@ -41,6 +55,9 @@ public class Note {
     }
     public String getCategory(){
         return category;
+    }
+    public void setCategory(String category){
+        this.category = category;
     }
     public String getFormattedTime() {
 
@@ -50,6 +67,13 @@ public class Note {
     public String getFormattedDate() {
 
         return currentTime.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
+    }
+    public boolean isComplete() {
+        return "Complete".equalsIgnoreCase(status);
+    }
+
+    public boolean isIncomplete() {
+        return "Incomplete".equalsIgnoreCase(status);
     }
 
 
